@@ -132,8 +132,7 @@ class Splits(object):
         """Modify self.clean_data so that each categorical column is turned
         into many columns that together form a one-hot vector for that variable.
         E.g. if you have a column 'Gender' with values 'M' and 'F', split it into
-        two binary columns 'Gender_M' and 'Gender_F', and add a corresponding
-        entry to the one hot indicies in self.date_dict['one_hot_indices']"""
+        two binary columns 'Gender_M' and 'Gender_F'"""
         print('One-hotifying',str(len(self.one_hotify_these_categorical)),
               'categorical variables')
         print('\tData shape before one-hotifying:',str(self.clean_data.shape))
