@@ -61,7 +61,7 @@ class Splits(object):
              one_hotify_these_categorical, #columns to one hotify
              normalize_data, #if True, normalize data based on training set
              normalize_these_continuous, #columns to normalize
-             seed): #seed to determine shuffling order before making splits; used for testing
+             seed): #seed to determine shuffling order before making splits
         assert (train_percent+valid_percent+test_percent)==1
         assert data.index.values.tolist()==labels.index.values.tolist()
         self.clean_data = data
@@ -88,14 +88,16 @@ class Splits(object):
         if normalize_data:
             self._normalize()
         else:
-            print('WARNING: you elected not to normalize your data. This could lead to poor performance.')
+            print('WARNING: you elected not to normalize your data. This could'+
+                  ' lead to poor performance.')
         self._make_splits() #creates self.train, self.valid, and self.test
     
     def _get_split_indices(self):
         """Get indices that will be used to split the data into train, test,
         and validation."""
         self.trainidx = int(self.clean_data.shape[0] * self.train_percent)
-        self.testidx = int(self.clean_data.shape[0] * (self.train_percent+self.test_percent))
+        self.testidx = int(self.clean_data.shape[0] * (self.train_percent
+                                                       +self.test_percent))
 
     def _shuffle_before_splitting(self):
         idx = np.arange(0, self.clean_data.shape[0])
@@ -108,15 +110,20 @@ class Splits(object):
     def _impute(self):
         """Impute categorical variables using the mode of the training data
         and continuous variables using the median of the training data."""
-        #impute missing categorical values with the training data mode https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.mode.html
-        print('Imputing categorical variables with mode:\n',str(self.impute_these_categorical))
+        #impute missing categorical values with the training data mode
+        #https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.mode.html
+        print('Imputing categorical variables with mode:\n',
+              str(self.impute_these_categorical))
         training_data = self.clean_data.iloc[0:self.trainidx,:]
-        imputed_with_modes = (self.clean_data[self.impute_these_categorical]).fillna((training_data[self.impute_these_categorical]).mode().iloc[0])
+        imputed_with_modes = (self.clean_data[self.impute_these_categorical]).fillna((
+            training_data[self.impute_these_categorical]).mode().iloc[0])
         self.clean_data[self.impute_these_categorical] = imputed_with_modes  
         
         #impute missing continuous values with the training data median
-        print('Imputing continuous variables with median:\n',str(self.impute_these_continuous))
-        imputed_with_medians = (self.clean_data[self.impute_these_continuous]).fillna((training_data[self.impute_these_continuous]).median())
+        print('Imputing continuous variables with median:\n',
+              str(self.impute_these_continuous))
+        imputed_with_medians = (self.clean_data[self.impute_these_continuous]).fillna((
+            training_data[self.impute_these_continuous]).median())
         self.clean_data[self.impute_these_continuous] = imputed_with_medians
         
         print('Done imputing')
@@ -127,14 +134,16 @@ class Splits(object):
         E.g. if you have a column 'Gender' with values 'M' and 'F', split it into
         two binary columns 'Gender_M' and 'Gender_F', and add a corresponding
         entry to the one hot indicies in self.date_dict['one_hot_indices']"""
-        print('One-hotifying',str(len(self.one_hotify_these_categorical)),'categorical variables')
+        print('One-hotifying',str(len(self.one_hotify_these_categorical)),
+              'categorical variables')
         print('\tData shape before one-hotifying:',str(self.clean_data.shape))
         #one hotify the categorical variables
-        self.clean_data = pd.get_dummies(data = self.clean_data, columns = self.one_hotify_these_categorical, dummy_na = False)
+        self.clean_data = pd.get_dummies(data = self.clean_data,
+                                         columns = self.one_hotify_these_categorical,
+                                         dummy_na = False)
         print('\tData shape after one-hotifying:',str(self.clean_data.shape))
 
     def _normalize(self):
-        #TODO test this
         """Provide the features specified in self.normalize_these_continuous
         with approximately zero mean and unit variance, based on the
         training dataset only."""
@@ -143,8 +152,11 @@ class Splits(object):
         scaler = sklearn.preprocessing.StandardScaler().fit(train_data)
         print('Normalizing data:\n\tscaler.mean_',str(scaler.mean_),
               '\n\tscaler.scale_',str(scaler.scale_))
-        assert len(self.normalize_these_continuous)==scaler.mean_.shape[0]==scaler.scale_.shape[0]
-        self.clean_data[self.normalize_these_continuous] = scaler.transform((self.clean_data[self.normalize_these_continuous]).values)
+        assert (len(self.normalize_these_continuous)
+                ==scaler.mean_.shape[0]
+                ==scaler.scale_.shape[0](
+        self.clean_data[self.normalize_these_continuous] = scaler.transform((
+            self.clean_data[self.normalize_these_continuous]).values)
         
     def _make_splits(self):
         """Split up self.clean_data and self.clean_labels
