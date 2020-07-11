@@ -85,7 +85,7 @@ class PlotAll(object):
         #https://stackoverflow.com/questions/8248467/matplotlib-tight-layout-doesnt-take-into-account-figure-suptitle
         fig.suptitle(title, fontsize=16)
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.savefig(savetitle+'.png')
+        plt.savefig(os.path.join('figures',savetitle+'.png'))
 
     def plot_roc_curve(self):
         #http://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
@@ -110,59 +110,31 @@ class PlotAll(object):
         self.ax[1].set_xlim([0.0, 1.0])
         self.ax[1].set_title('Average Precision=%0.2f' % sklearn.metrics.average_precision_score(self.y_true, self.y_score))
 
-def plot_equal():
-    y_true, y_score = add_true_positives([],[],n=100,decision_thresh=0.5)
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=0.5)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=0.5)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=100,decision_thresh=0.5)
-    title = 'Balanced Data. When d=0.5: '+confusion_matrix_string(y_true, y_score,decision_thresh=0.5)
-    savetitle = 'Balanced'
-    PlotAll(title,savetitle,y_true,y_score)
 
-#######################
-# High True Positives #---------------------------------------------------------
-#######################
-def plot_high_TP():
-    for decision_thresh in [0.1,0.5,0.9]:
-        plot_high_TP_constant_P(decision_thresh)
-        plot_high_TP_high_P(decision_thresh)
-        plot_high_TP_low_P(decision_thresh)
-    
-def plot_high_TP_constant_P(decision_thresh):
-    y_true, y_score = add_true_positives([],[],n=150,decision_thresh=decision_thresh) #add 50 true positives
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=decision_thresh)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=50,decision_thresh=decision_thresh) #remove 50 false positives
-    title = 'High TP Constant P. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
-    savetitle = 'HighTPConstantP'+str(decision_thresh)
-    PlotAll(title,savetitle,y_true,y_score)
-
-def plot_high_TP_high_P(decision_thresh):
-    y_true, y_score = add_true_positives([],[],n=150,decision_thresh=decision_thresh) #add 50 true positives
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=decision_thresh)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
-    title = 'High TP High P. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
-    savetitle = 'HighTPHighP'+str(decision_thresh)
-    PlotAll(title,savetitle,y_true,y_score)
-    
-def plot_high_TP_low_P(decision_thresh):
-    y_true, y_score = add_true_positives([],[],n=50,decision_thresh=decision_thresh) #From their high of 150, reduce by a factor of 3
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=decision_thresh)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=16,decision_thresh=decision_thresh) #3x fewer false positives than true positives
-    title = 'High TP Low P. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
-    savetitle = 'HighTPLowP'+str(decision_thresh)
-    PlotAll(title,savetitle,y_true,y_score)
-    
-########################
-# High False Positives #-------------------------------------------------------- 
-########################
-
-
-
-
-
+def run_simulations_and_make_plots():
+    control_df = pd.read_csv('2020-07-11-sim_setups.csv',header=0)
+    decision_thresh = 0.5
+    control_df['Sim_AUROCs']=''
+    control_df['Sim_AvgPrecs']=''
+    for idx in control_df.index.values.tolist():
+        plotted = False
+        sim_aurocs = []
+        sim_avgprecs = []
+        for i in range(10):
+            y_true, y_score = add_true_positives([],[],n=control_df.at[idx,'TP'],decision_thresh=decision_thresh) #add 50 true positives
+            y_true, y_score = add_false_positives(y_true,y_score,n=control_df.at[idx,'FP'],decision_thresh=decision_thresh)
+            y_true, y_score = add_true_negatives(y_true,y_score,n=control_df.at[idx,'TN'],decision_thresh=decision_thresh)
+            y_true, y_score = add_false_negatives(y_true,y_score,n=control_df.at[idx,'FN'],decision_thresh=decision_thresh) #remove 50 false positives
+            sim_aurocs.append(sklearn.metrics.roc_auc_score(y_true,y_score))
+            sim_avgprecs.append(sklearn.metrics.average_precision_score(y_true,y_score))
+            if not plotted:
+                title = control_df.at[idx,'Title']+'. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
+                savetitle = control_df.at[idx,'SaveTitle']+str(decision_thresh)
+                PlotAll(title,savetitle,y_true,y_score)
+                plotted = True
+        control_df.at[idx,'Sim_AUROCs'] = str(sim_aurocs)
+        control_df.at[idx,'Sim_AvgPrecs'] = str(sim_avgprecs)
+    control_df.to_csv('2020-07-11-sim_results.csv')
 
 if __name__=='__main__':
     #plot_equal()
