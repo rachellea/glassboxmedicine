@@ -1,7 +1,8 @@
 #2020-07-11-auroc-auprc.py
 
+import os
 import numpy as np
-
+import pandas as pd
 import sklearn.metrics
 import matplotlib.pyplot as plt
 
@@ -112,7 +113,7 @@ class PlotAll(object):
 
 
 def run_simulations_and_make_plots():
-    control_df = pd.read_csv('2020-07-11-sim_setups.csv',header=0)
+    control_df = pd.read_csv('sim_setups.csv',header=0)
     decision_thresh = 0.5
     control_df['Sim_AUROCs']=''
     control_df['Sim_AvgPrecs']=''
@@ -125,18 +126,17 @@ def run_simulations_and_make_plots():
             y_true, y_score = add_false_positives(y_true,y_score,n=control_df.at[idx,'FP'],decision_thresh=decision_thresh)
             y_true, y_score = add_true_negatives(y_true,y_score,n=control_df.at[idx,'TN'],decision_thresh=decision_thresh)
             y_true, y_score = add_false_negatives(y_true,y_score,n=control_df.at[idx,'FN'],decision_thresh=decision_thresh) #remove 50 false positives
-            sim_aurocs.append(sklearn.metrics.roc_auc_score(y_true,y_score))
-            sim_avgprecs.append(sklearn.metrics.average_precision_score(y_true,y_score))
+            sim_aurocs.append(round(sklearn.metrics.roc_auc_score(y_true,y_score),3))
+            sim_avgprecs.append(round(sklearn.metrics.average_precision_score(y_true,y_score),3))
             if not plotted:
                 title = control_df.at[idx,'Title']+'. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
-                savetitle = control_df.at[idx,'SaveTitle']+str(decision_thresh)
+                savetitle = control_df.at[idx,'SaveTitle']+'-d'+str(decision_thresh)
                 PlotAll(title,savetitle,y_true,y_score)
                 plotted = True
         control_df.at[idx,'Sim_AUROCs'] = str(sim_aurocs)
         control_df.at[idx,'Sim_AvgPrecs'] = str(sim_avgprecs)
-    control_df.to_csv('2020-07-11-sim_results.csv')
+    control_df.to_csv('sim_results.csv')
 
 if __name__=='__main__':
-    #plot_equal()
-    plot_high_TP()
+    run_simulations_and_make_plots()
     

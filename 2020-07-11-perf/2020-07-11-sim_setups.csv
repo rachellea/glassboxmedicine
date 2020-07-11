@@ -1,5 +1,0 @@
-Title,SaveTitle,TP,FN,TN,FP
-Balanced Data,Balanced,100,100,100,100
-High TP Constant P,HighTPConstantP,170,30,100,100
-High TP High P,HighTPHighP,340,60,100,100
-High TP Low P,HighTPLowP,85,15,100,100
