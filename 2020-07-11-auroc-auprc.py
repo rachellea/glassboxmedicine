@@ -5,55 +5,55 @@ import numpy as np
 import sklearn.metrics
 import matplotlib.pyplot as plt
 
-def add_true_positives(y_true, y_score, n, decision_threshold):
+def add_true_positives(y_true, y_score, n, decision_thresh):
     """Return <y_true> and <y_score> so that they contain <n> additional
-    true positives assuming a decision threshold of <decision_threshold>.
+    true positives assuming a decision threshold of <decision_thresh>.
     True positives are predicted positive and actually positive."""
     #Predicted positive:
-    pos_scores = np.random.uniform(low = decision_threshold+0.001, high = 1.0, size = n)
+    pos_scores = np.random.uniform(low = decision_thresh+0.001, high = 1.0, size = n)
     y_score_new = y_score+pos_scores.tolist()
     #Actually positive:
     y_true_new = y_true+([1]*n)
     return y_true_new, y_score_new
     
-def add_false_positives(y_true, y_score, n, decision_threshold):
+def add_false_positives(y_true, y_score, n, decision_thresh):
     """Return <y_true> and <y_score> so that they contain <n> additional
-    false positives assuming a decision threshold of <decision_threshold>.
+    false positives assuming a decision threshold of <decision_thresh>.
     False positives are predicted positive and actually negative."""
     #Predicted positive:
-    pos_scores = np.random.uniform(low = decision_threshold+0.001, high = 1.0, size = n)
+    pos_scores = np.random.uniform(low = decision_thresh+0.001, high = 1.0, size = n)
     y_score_new = y_score+pos_scores.tolist()
     #Actually negative:
     y_true_new = y_true+([0]*n)
     return y_true_new, y_score_new
     
-def add_true_negatives(y_true, y_score, n, decision_threshold):
+def add_true_negatives(y_true, y_score, n, decision_thresh):
     """Return <y_true> and <y_score> so that they contain <n> additional
-    true negatives assuming a decision threshold of <decision_threshold>.
+    true negatives assuming a decision threshold of <decision_thresh>.
     True negatives are predicted negative and actually negative."""
     #Predicted negative:
-    neg_scores = np.random.uniform(low = 0, high = decision_threshold-0.001, size = n)
+    neg_scores = np.random.uniform(low = 0, high = decision_thresh-0.001, size = n)
     y_score_new = y_score+neg_scores.tolist()
     #Actually negative:
     y_true_new = y_true+([0]*n)
     return y_true_new, y_score_new
 
-def add_false_negatives(y_true, y_score, n, decision_threshold):
+def add_false_negatives(y_true, y_score, n, decision_thresh):
     """Return <y_true> and <y_score> so that they contain <n> additional
-    false negatives assuming a decision threshold of <decision_threshold>.
+    false negatives assuming a decision threshold of <decision_thresh>.
     False negatives are predicted negative and actually positive."""
     #Predicted negative:
-    neg_scores = np.random.uniform(low = 0, high = decision_threshold-0.001, size = n)
+    neg_scores = np.random.uniform(low = 0, high = decision_thresh-0.001, size = n)
     y_score_new = y_score+neg_scores.tolist()
     #Actually positive:
     y_true_new = y_true+([1]*n)
     return y_true_new, y_score_new
 
 
-def confusion_matrix_string(y_true, y_score, decision_threshold):
+def confusion_matrix_string(y_true, y_score, decision_thresh):
     """Return the confusion matrix"""
-    #Obtain binary predicted labels by applying <decision_threshold> to <y_score>
-    y_pred = (np.array(y_score) > decision_threshold)
+    #Obtain binary predicted labels by applying <decision_thresh> to <y_score>
+    y_pred = (np.array(y_score) > decision_thresh)
     cm = sklearn.metrics.confusion_matrix(y_true=y_true, y_pred=y_pred)
     true_neg, false_pos, false_neg, true_pos = cm.ravel()
     #TPR_recall = float(true_pos)/(true_pos + false_neg)
@@ -111,43 +111,60 @@ class PlotAll(object):
         self.ax[1].set_title('Average Precision=%0.2f' % sklearn.metrics.average_precision_score(self.y_true, self.y_score))
 
 def plot_equal():
-    y_true, y_score = add_true_positives([],[],n=100,decision_threshold=0.5)
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=100,decision_threshold=0.5)
-    title = 'Balanced Data. When d=0.5: '+confusion_matrix_string(y_true, y_score,decision_threshold=0.5)
+    y_true, y_score = add_true_positives([],[],n=100,decision_thresh=0.5)
+    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=0.5)
+    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=0.5)
+    y_true, y_score = add_false_negatives(y_true,y_score,n=100,decision_thresh=0.5)
+    title = 'Balanced Data. When d=0.5: '+confusion_matrix_string(y_true, y_score,decision_thresh=0.5)
     savetitle = 'Balanced'
     PlotAll(title,savetitle,y_true,y_score)
 
-def plot_high_TP_constant_P():
-    y_true, y_score = add_true_positives([],[],n=150,decision_threshold=0.5) #add 50 true positives
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=50,decision_threshold=0.5) #remove 50 false positives
-    title = 'High TP Constant P. When d=0.5: '+confusion_matrix_string(y_true, y_score,decision_threshold=0.5)
-    savetitle = 'HighTPConstantP'
+#######################
+# High True Positives #---------------------------------------------------------
+#######################
+def plot_high_TP():
+    for decision_thresh in [0.1,0.5,0.9]:
+        plot_high_TP_constant_P(decision_thresh)
+        plot_high_TP_high_P(decision_thresh)
+        plot_high_TP_low_P(decision_thresh)
+    
+def plot_high_TP_constant_P(decision_thresh):
+    y_true, y_score = add_true_positives([],[],n=150,decision_thresh=decision_thresh) #add 50 true positives
+    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=decision_thresh)
+    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
+    y_true, y_score = add_false_negatives(y_true,y_score,n=50,decision_thresh=decision_thresh) #remove 50 false positives
+    title = 'High TP Constant P. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
+    savetitle = 'HighTPConstantP'+str(decision_thresh)
     PlotAll(title,savetitle,y_true,y_score)
 
-def plot_high_TP_high_P():
-    y_true, y_score = add_true_positives([],[],n=150,decision_threshold=0.5) #add 50 true positives
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=100,decision_threshold=0.5)
-    title = 'High TP High P. When d=0.5: '+confusion_matrix_string(y_true, y_score,decision_threshold=0.5)
-    savetitle = 'HighTPHighP'
+def plot_high_TP_high_P(decision_thresh):
+    y_true, y_score = add_true_positives([],[],n=150,decision_thresh=decision_thresh) #add 50 true positives
+    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=decision_thresh)
+    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
+    y_true, y_score = add_false_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
+    title = 'High TP High P. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
+    savetitle = 'HighTPHighP'+str(decision_thresh)
     PlotAll(title,savetitle,y_true,y_score)
     
-def plot_high_TP_low_P():
-    y_true, y_score = add_true_positives([],[],n=50,decision_threshold=0.5) #From their high of 150, reduce by a factor of 3
-    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_threshold=0.5)
-    y_true, y_score = add_false_negatives(y_true,y_score,n=16,decision_threshold=0.5) #3x fewer false positives than true positives
-    title = 'High TP Low P. When d=0.5: '+confusion_matrix_string(y_true, y_score,decision_threshold=0.5)
-    savetitle = 'HighTPLowP'
+def plot_high_TP_low_P(decision_thresh):
+    y_true, y_score = add_true_positives([],[],n=50,decision_thresh=decision_thresh) #From their high of 150, reduce by a factor of 3
+    y_true, y_score = add_false_positives(y_true,y_score,n=100,decision_thresh=decision_thresh)
+    y_true, y_score = add_true_negatives(y_true,y_score,n=100,decision_thresh=decision_thresh)
+    y_true, y_score = add_false_negatives(y_true,y_score,n=16,decision_thresh=decision_thresh) #3x fewer false positives than true positives
+    title = 'High TP Low P. When d='+str(decision_thresh)+': '+confusion_matrix_string(y_true, y_score,decision_thresh=decision_thresh)
+    savetitle = 'HighTPLowP'+str(decision_thresh)
     PlotAll(title,savetitle,y_true,y_score)
     
+########################
+# High False Positives #-------------------------------------------------------- 
+########################
+
+
+
+
 
 
 if __name__=='__main__':
     #plot_equal()
-    plot_high_true_positives()
+    plot_high_TP()
+    
